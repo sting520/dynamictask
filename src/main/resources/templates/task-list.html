@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" >
+
+<head>
+    <meta charset="UTF-8">
+    <title>管理</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8,target-densitydpi=low-dpi" />
+    <link rel="shortcut icon" type="image/x-icon" th:href="@{/favicon.ico}"/>
+    <link rel="stylesheet" th:href="@{/lib/layui/css/layui.css}">
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/animate.min.css}">
+    <link rel="stylesheet" th:href="@{/iconfont/iconfont.css}">
+</head>
+
+<body>
+
+<div class="page-loading">
+    <div class="rubik-loader"></div>
+</div>
+
+<div class="z-body animated fadeIn">
+
+    <form class="layui-form zadmin-search-area input">
+        <div class="layui-form-item">
+            <div class="layui-inline">
+                <label for="name" class="layui-form-label">名称</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="name" autocomplete="off"
+                           id="name" class="layui-input">
+                </div>
+
+                <button lay-submit="" lay-filter="search" class="layui-btn layui-btn-sm layui-btn-primary table-action">
+                    <i class="zadmin-icon zadmin-icon-search"></i>
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <table class="layui-hide" id="role-table"></table>
+</div>
+
+
+
+
+
+<script type="text/html" id="column-toolbar">
+
+
+        <a lay-event="edit">
+            <i class="zadmin-icon zadmin-icon-edit-square zadmin-oper-area zadmin-blue" title="编辑"></i>
+        </a>
+
+
+        <a lay-event="del">
+            <i class="zadmin-icon zadmin-icon-delete zadmin-oper-area zadmin-red" title="删除"></i>
+        </a>
+
+
+        <a lay-event="startOrStop">
+        <i class="zadmin-icon zadmin-icon-wuquanxian zadmin-oper-area zadmin-red" title="启用/禁止"></i>
+        </a>
+
+</script>
+
+
+<script th:src="@{/lib/jquery/jquery.min.js}"></script>
+<script th:src="@{/lib/layui/layui.js}"></script>
+<script th:src="@{/js/common.js}"></script>
+
+<script>
+
+
+
+
+    layui.config({
+        base: '/lib/layui/extend/'
+    }).use(['table', 'element', 'dtree', 'form', 'tablePlug'], function () {
+        var table = layui.table;
+        var $ = layui.$;
+        var dtree = layui.dtree;
+        var form = layui.form;
+        var tablePlug = layui.tablePlug;
+
+        tablePlug.smartReload.enable(true);
+
+        form.on('submit(search)', function (form) {
+            table.reload('role-table', {
+                where: form.field
+            });
+            return false;
+        });
+
+        table.render({
+            elem: '#role-table'
+            , url: '/v1/api/dyTasks/list'
+            // , cellMinWidth: 80
+            ,headers: {accessToken: sessionStorage.getItem("taskCenterAccessToken"),clientId:sessionStorage.getItem("username")}
+            // , page: true
+            // , toolbar: '#toolbar'
+            , smartReloadModel: true
+            , cols: [
+                [
+                      {field: 'id', title: '序号', width:80}
+                    , {field: 'name', title: '名称', width:150 }
+                    , {field: 'beanName', title: '任务Bean名称', width:150}
+                    , {field: 'cron', title: 'cron表达式', width:130}
+                    , {field: 'remark', title: '描述' }
+                    , {field: 'status', title: '是否启用', width:100,templet: function (d) {
+
+                        if(d.status ==1){
+                            return "<font color='#FF5722'>禁用</font>";
+                        }else{
+                            return "<font color='#1E9FFF'>启用</font>";
+                        }
+
+                    }}
+                    , {field: 'createTime', title: '创建时间', width:160  }
+                    , {field: 'updateTime', title: '更新时间', width:160}
+                    , {title: '操作', fixed: 'right', align: 'center', toolbar: '#column-toolbar', width:150}
+                ]
+            ]
+            ,height: 'full'
+        });
+
+        // table.on('toolbar', function (obj) {
+        //     var event = obj.event;
+        //     if (event === 'add') {
+        //         add();
+        //     }
+        // });
+
+
+        table.on('tool', function (obj) {
+            var data = obj.data;
+            var event = obj.event;
+
+            if (event === 'edit') {
+                edit(data.id);
+            } else if (event === 'startOrStop') {
+                startOrStop(obj);
+            } else if (event === 'del') {
+                del(obj);
+            }
+        });
+
+        function add() {
+            layer.open({
+                content: "/taskAdd",
+                title: "新增角色",
+                area: ['40%', '85%'],
+                type: 2,
+                maxmin: true,
+                shadeClose: true,
+                end: function () {
+                    table.reload('role-table');
+                }
+            });
+        }
+        function startOrStop(obj) {
+            var status = obj.data.status;
+            var tips = ((status==0)?"禁止":"启用");
+            var url = ((status==0)?"/v1/api/dyTasks/cancelTask":"/v1/api/dyTasks/scheduleTask");
+            layer.confirm("确定"+tips+"任务吗?", {icon: 3, title: '提示'},
+                function (index) {// 确定回调
+                    var taskName = obj.data.beanName;
+
+                    $.ajax({
+                        type: 'GET',
+                        headers: {accessToken: sessionStorage.getItem("taskCenterAccessToken"),clientId:sessionStorage.getItem("username")},
+                        url:url+'?taskName='+taskName  ,
+                        // data:{_method:"DELETE",taskId:id},
+                        // contentType: "application/json",
+                        dataType: 'json',
+                        cache: false,
+                        async: true,
+                        success: function(res) {
+                            layer.close(index);
+                            handlerResult(res, startOrStopDone);
+                        }
+                    });
+                }, function (index) {//取消回调
+                    layer.close(index);
+                }
+            );
+        }
+
+        function edit(id) {
+            layer.open({
+                content: "/taskAdd?id=" + id,
+                title: "编辑任务",
+                area: ['40%', '85%'],
+                type: 2,
+                maxmin: true,
+                shadeClose: true,
+                end: function () {
+                    table.reload('role-table');
+                }
+            });
+        }
+
+        function del(obj) {
+            layer.confirm("确定删除任务吗?", {icon: 3, title: '提示'},
+                function (index) {// 确定回调
+                    var id = obj.data.id;
+                    // $.post('/v1/api/dyTasks/' + id, {_method: "remove"}, function (data) {
+                    //     layer.close(index);
+                    //     handlerResult(data, deleteDone);
+                    // });
+                    $.ajax({
+                        type: 'POST',
+                        headers: {accessToken: sessionStorage.getItem("taskCenterAccessToken"),clientId:sessionStorage.getItem("username")},
+                        url:'/v1/api/dyTasks/remove'  ,
+                        data:{_method:"DELETE",taskId:id},
+                        // contentType: "application/json",
+                        dataType: 'json',
+                        cache: false,
+                        async: true,
+                        success: function(res) {
+                            layer.close(index);
+                            handlerResult(res, deleteDone);
+                        }
+                    });
+                }, function (index) {//取消回调
+                    layer.close(index);
+                }
+            );
+        }
+
+        function deleteDone(data) {
+            parent.layer.msg("删除成功", {icon: 6});
+            table.reload('role-table');
+        }
+        function startOrStopDone(data) {
+            parent.layer.msg("操作成功", {icon: 6});
+            table.reload('role-table');
+        }
+
+    });
+</script>
+</body>
+
+</html>

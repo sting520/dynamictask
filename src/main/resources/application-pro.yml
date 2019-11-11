@@ -1,0 +1,106 @@
+spring:
+    datasource:
+        druid:
+            url: jdbc:oracle:thin:@127.0.0.1:1521:ORCL
+            driver-class-name: oracle.jdbc.driver.OracleDriver
+            username: 333
+            password: ddd1
+            # 配置初始化大小、最小、最大
+            minIdle: 2
+            initialSize: 2
+            maxActive: 5
+            #配置获取连接等待超时的时间
+            maxWait: 60000
+            #测试连接
+            validationQuery: SELECT 1 FROM DUAL
+            #是否开启PSCache，PSCache对支持游标的数据库性能提升巨大，oracle建议开启，mysql下建议关闭
+            poolPreparedStatements: true
+            #开启poolPreparedStatements后生效
+            maxPoolPreparedStatementPerConnectionSize: 20
+            #获取连接时执行检测，建议关闭，影响性能
+            testOnBorrow: false
+            #申请连接的时候检测，建议配置为true，不影响性能，并且保证安全性
+            testWhileIdle: true
+            #配置一个连接在池中最小生存的时间，单位是毫秒
+            minEvictableIdleTimeMillis: 300000
+            #配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒
+            timeBetweenEvictionRunsMillis: 60000
+            #归还连接时执行检测，建议关闭，影响性能
+            testOnReturn: false
+            type: com.alibaba.druid.pool.DruidDataSource
+            # 通过connectProperties属性来打开mergeSql功能；慢SQL记录
+            connectionProperties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=5000
+            #回收机制
+            remove-abandoned: true
+            remove-abandoned-timeout: 300
+            log-abandoned: false
+            #配置扩展插件，常用的插件有=>stat:监控统计  log4j:日志  wall:防御sql注入
+            filters: stat,wall,log4j2
+            # Druid WebStatFilter配置
+            web-stat-filter:
+                enabled: true
+                url-pattern: /*
+                exclusions: '*.gif,*.png,*.jpg,*.html,*.js,*.css,*.ico,/druid/*'
+            # Druid StatViewServlet配置
+            stat-view-servlet:
+                enabled: true
+                url-pattern: /druid/*
+                reset-enable: true
+                login-username: scott
+                login-password: ABCde1234
+                # 配置日志输出
+            filter:
+                slf4j:
+                    enabled: true
+                    statement-create-after-log-enabled: false
+                    statement-close-after-log-enabled: false
+                    result-set-open-after-log-enabled: false
+                    result-set-close-after-log-enabled: false
+    dynamictask:
+        login-username: admin
+        login-password: c4ca4238a0b923820dcc509a6f75849b
+    http:
+        encoding:
+            charset: UTF-8
+            force: true
+            enabled: true
+    thymeleaf: #thymelea模板配置
+        prefix: classpath:/templates/
+        suffix: .html
+        mode: HTML5
+        encoding: utf-8
+        cache: false
+    resources:
+        chain:
+            strategy:
+                content:
+                    enabled: true  #热部署文件，页面不产生缓存，及时更新
+                    paths: /**
+    jackson:
+        time-zone: GMT+8
+        date-format: yyyy-MM-dd HH:mm:ss
+mybatis-plus:
+    mapper-locations: classpath*:com.power.taskcenter.mapper.xml/*Mapper.xml
+    #实体扫描，多个package用逗号或者分号分隔
+    #  typeAliasesPackage: com.power.schoolinterface.model.*
+    global-config:
+        banner: false
+        #主键类型  0:"数据库ID自增", 1:"用户输入ID",2:"全局唯一ID (数字类型唯一ID)", 3:"全局唯一ID UUID";
+        id-type: 1
+        #字段策略 0:"忽略判断",1:"非 NULL 判断"),2:"非空判断"
+        #field-strategy: 2
+        ##    #驼峰下划线转换
+        ##    db-column-underline: false
+        ##    #刷新mapper 调试神器
+        ##    refresh-mapper: true
+        #数据库大写下划线转换
+        #capital-mode: true
+        # Sequence序列接口实现类配置
+        key-generator: com.baomidou.mybatisplus.extension.incrementer.OracleKeyGenerator
+
+server:
+    tomcat:
+        uri-encoding: UTF-8
+    port: 1204
+logging:
+    config: classpath:logback-spring.xml

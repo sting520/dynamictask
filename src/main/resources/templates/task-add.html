@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>管理</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport"
+          content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8,target-densitydpi=low-dpi"/>
+    <link rel="shortcut icon" type="image/x-icon" th:href="@{/favicon.ico}"/>
+    <link rel="stylesheet" th:href="@{/lib/layui/css/layui.css}">
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/animate.min.css}">
+</head>
+
+<body>
+<div class="z-body animated fadeIn">
+    <form action="" method="post" class="layui-form layui-form-pane">
+        <div class="layui-form-item">
+            <label for="name" class="layui-form-label">
+               名称
+            </label>
+            <div class="layui-input-block">
+                <input type="text" id="name" name="name" th:value="${resource?.name}"
+                       lay-verify="required" lay-vertype="tips"
+                       autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label for="beanName" class="layui-form-label">
+                任务Bean名称
+            </label>
+            <div class="layui-input-block">
+                <input type="text" id="beanName" name="beanName" th:value="${resource?.beanName}"
+                       lay-verify="required" lay-vertype="tips"
+                       autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label for="cron" class="layui-form-label">
+                cron表达式
+            </label>
+            <div class="layui-input-block">
+                <input type="text" id="cron" name="cron" th:value="${resource?.cron}"
+                       lay-verify="required" lay-vertype="tips"
+                       autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label for="remark" class="layui-form-label">
+                描述
+            </label>
+            <div class="layui-input-block">
+                <input type="text" id="remark" name="remark" th:value="${resource?.remark}"
+                       lay-verify="required" lay-vertype="tips"
+                       autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block" style="margin-left:0;text-align:center;">
+                <input type="hidden" name="id" id ="id" th:value="${resource?.id}">
+                <input type="hidden" name="status" id ="status" th:value="${resource?.status}">
+                <button class="layui-btn layui-btn-blue" th:text="修改" lay-submit="" data-th-lay-filter="edit">修改</button>
+                <button class="layui-btn layui-btn-primary" th:text="返回" lay-submit="" data-th-lay-filter="return">返回</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+
+
+<script th:src="@{/lib/jquery/jquery.min.js}"></script>
+<script th:src="@{/lib/layui/layui.js}"></script>
+<script th:src="@{/js/common.js}"></script>
+
+<script>
+  //  alert()
+    layui.use(['form', 'layer'], function () {
+        $ = layui.jquery;
+        var form = layui.form
+            , layer = layui.layer;
+
+
+
+        $.ajax({
+            type: 'GET',
+            headers: {accessToken: sessionStorage.getItem("taskCenterAccessToken"),clientId:sessionStorage.getItem("username")},
+            url:'/v1/api/dyTasks/queryById'  ,
+            data:{taskId:getQueryString("id")},
+            // contentType: "application/json",
+            dataType: 'json',
+            cache: false,
+            async: true,
+            success: function(res) {
+                //console.log(res.data);
+                var obj = res.data;
+                $("#name").val(obj.name);
+                $("#beanName").val(obj.beanName);
+                $("#cron").val(obj.cron);
+                $("#remark").val(obj.remark);
+                $("#id").val(obj.id);
+                $("#status").val(obj.status);
+            }
+        });
+        form.on('submit(return)', function (form) {
+            parent.layer.closeAll();
+        })
+        // 监听提交
+        form.on('submit(edit)', function (form) {
+          //   form.field._method = 'PUT';
+        //    console.log(form.field)
+
+            // $.post('/role', form.field, function (result) {
+            //     handlerResult(result, editDone);
+            // });
+            $.ajax({
+                type: 'PUT',
+                headers: {accessToken: sessionStorage.getItem("taskCenterAccessToken"),clientId:sessionStorage.getItem("username")},
+                url:'/v1/api/dyTasks/update'  ,
+                data: JSON.stringify(form.field) ,
+                contentType: "application/json",
+                dataType: 'json',
+                cache: false,
+                async: true,
+                success: function(res) {
+
+                    handlerResult(res, editDone);
+                    // parent.layer.closeAll();
+                    // layer.close(layer.index);
+                }
+            });
+
+
+            return false;
+        });
+
+
+
+
+        function editDone(data) {
+            layer.msg("修改成功", {icon: 6});
+
+        }
+    });
+</script>
+</body>
+
+</html>
